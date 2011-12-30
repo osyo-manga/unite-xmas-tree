@@ -13,10 +13,17 @@ let s:source = {
 \}
 let s:source.hooks.source = s:source.source
 
-function! s:rand(n)
-	let match_end = matchend(reltimestr(reltime()), '\d\+\.') + 1
-	let rand = reltimestr(reltime())[match_end : ] % (a:n + 1)
-	return rand
+let s:RAND_MAX = 32767
+
+let s:seed = 0
+
+function! s:srand(seed)
+  let s:seed = a:seed
+endfunction
+
+function! s:rand()
+  let s:seed = s:seed * 214013 + 2531011
+  return (s:seed < 0 ? s:seed - 0x80000000 : s:seed) / 0x10000 % 0x8000
 endfunction
 
 function! s:space(n, ...)
@@ -28,7 +35,7 @@ function! s:tree(height, bells)
 	let tree = [ s:space(height)."★" ]
 	let bells = split(a:bells, '.\zs') + map(range(height/3), "' '")
 	for n in range(height)
-		let bell = join(map(range(n*2), "bells[s:rand(len(bells))-1]"),"")
+		let bell = join(map(range(n*2), "bells[s:rand()%len(bells)-1]"),"")
 		let result = s:space(height-n-1)."／".bell."＼"
 		let tree = tree + [result]
 	endfor
@@ -51,8 +58,10 @@ function! s:source.hooks.on_syntax(args, context)
 	syntax match green /＼/ containedin=uniteSource_xmas_tree
 	syntax match green /／/ containedin=uniteSource_xmas_tree
 	syntax match green /\^/ containedin=uniteSource_xmas_tree
-	syntax match green /|/ containedin=uniteSource_xmas_tree
+	syntax match Maroon /|/ containedin=uniteSource_xmas_tree
+	
 	highlight green gui=bold guifg=Green
+	highlight Maroon gui=bold guifg='#800000'
 	
 	let bells = "@*?&i"
 	let colors = ["'#00FF00'", "'#00FFFF'", "'#FFD700'", "'#0000FF'", "'#FF0000'"]
